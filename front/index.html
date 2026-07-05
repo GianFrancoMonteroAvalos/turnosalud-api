@@ -1,12 +1,257 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>TurnoSalud — Gestión de Turnos</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<h1>Demo</h1>
+    <header class="header">
+        <div class="header__brand">
+            <span class="header__icon" aria-hidden="true">+</span>
+            <h1>TurnoSalud</h1>
+        </div>
+        <nav class="nav" aria-label="Navegación principal">
+            <button class="nav__btn nav__btn--active" data-section="dashboard">Dashboard</button>
+            <button class="nav__btn" data-section="practicas">Prácticas</button>
+            <button class="nav__btn" data-section="pacientes">Pacientes</button>
+            <button class="nav__btn" data-section="turnos">Turnos</button>
+        </nav>
+    </header>
+
+    <main class="main">
+        <!-- Dashboard -->
+        <section id="dashboard" class="section section--active">
+            <h2 class="section__title">Panel principal</h2>
+            <p class="section__subtitle">Resumen general del sistema</p>
+            <div class="stats">
+                <article class="stat-card stat-card--pacientes">
+                    <span class="stat-card__label">Pacientes</span>
+                    <span class="stat-card__value" id="stat-pacientes">—</span>
+                </article>
+                <article class="stat-card stat-card--practicas">
+                    <span class="stat-card__label">Prácticas</span>
+                    <span class="stat-card__value" id="stat-practicas">—</span>
+                </article>
+                <article class="stat-card stat-card--turnos">
+                    <span class="stat-card__label">Turnos</span>
+                    <span class="stat-card__value" id="stat-turnos">—</span>
+                </article>
+            </div>
+        </section>
+
+        <!-- Prácticas -->
+        <section id="practicas" class="section" hidden>
+            <div class="section__header">
+                <div>
+                    <h2 class="section__title">Prácticas</h2>
+                    <p class="section__subtitle">Gestión de estudios médicos (TC y RX)</p>
+                </div>
+                <button class="btn btn--primary" id="btn-nueva-practica">+ Nueva práctica</button>
+            </div>
+            <div class="table-wrapper">
+                <table class="table" id="tabla-practicas">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Modalidad</th>
+                            <th>Duración</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="practicas-tbody">
+                        <tr><td colspan="4" class="table__empty">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Pacientes -->
+        <section id="pacientes" class="section" hidden>
+            <div class="section__header">
+                <div>
+                    <h2 class="section__title">Pacientes</h2>
+                    <p class="section__subtitle">Registro y búsqueda de pacientes</p>
+                </div>
+                <button class="btn btn--primary" id="btn-nuevo-paciente">+ Nuevo paciente</button>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="buscar-documento" class="input" placeholder="Buscar por documento..." maxlength="10">
+                <button class="btn btn--secondary" id="btn-buscar-documento">Buscar</button>
+                <button class="btn btn--ghost" id="btn-limpiar-busqueda">Ver todos</button>
+            </div>
+            <div class="table-wrapper">
+                <table class="table" id="tabla-pacientes">
+                    <thead>
+                        <tr>
+                            <th>Nombre completo</th>
+                            <th>Documento</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pacientes-tbody">
+                        <tr><td colspan="5" class="table__empty">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Turnos -->
+        <section id="turnos" class="section" hidden>
+            <div class="section__header">
+                <div>
+                    <h2 class="section__title">Turnos</h2>
+                    <p class="section__subtitle">Asignación y seguimiento de turnos</p>
+                </div>
+                <button class="btn btn--primary" id="btn-nuevo-turno">+ Nuevo turno</button>
+            </div>
+            <div class="table-wrapper">
+                <table class="table" id="tabla-turnos">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Paciente</th>
+                            <th>Prácticas</th>
+                            <th>Duración</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="turnos-tbody">
+                        <tr><td colspan="7" class="table__empty">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Notificaciones -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Diálogo de confirmación -->
+    <dialog id="confirm-dialog" class="dialog">
+        <form method="dialog" class="dialog__content">
+            <h3 class="dialog__title" id="confirm-title">Confirmar acción</h3>
+            <p class="dialog__message" id="confirm-message"></p>
+            <div class="dialog__actions">
+                <button type="button" class="btn btn--ghost" id="confirm-cancel">Cancelar</button>
+                <button type="button" class="btn btn--danger" id="confirm-ok">Eliminar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Modal Práctica -->
+    <dialog id="modal-practica" class="dialog">
+        <form id="form-practica" class="dialog__content dialog__content--form" novalidate>
+            <h3 class="dialog__title" id="modal-practica-titulo">Nueva práctica</h3>
+            <input type="hidden" id="practica-id">
+            <div class="form-group">
+                <label for="practica-nombre">Nombre *</label>
+                <input type="text" id="practica-nombre" class="input" required maxlength="100">
+                <span class="form-error" id="error-practica-nombre"></span>
+            </div>
+            <div class="form-group">
+                <label for="practica-modalidad">Modalidad *</label>
+                <select id="practica-modalidad" class="input" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="TC">TC — Tomografía</option>
+                    <option value="RX">RX — Radiografía</option>
+                </select>
+                <span class="form-error" id="error-practica-modalidad"></span>
+            </div>
+            <div class="form-group">
+                <label for="practica-duracion">Duración (minutos) *</label>
+                <input type="number" id="practica-duracion" class="input" min="5" required>
+                <span class="form-error" id="error-practica-duracion"></span>
+            </div>
+            <div class="dialog__actions">
+                <button type="button" class="btn btn--ghost" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn--primary">Guardar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Modal Paciente -->
+    <dialog id="modal-paciente" class="dialog">
+        <form id="form-paciente" class="dialog__content dialog__content--form" novalidate>
+            <h3 class="dialog__title" id="modal-paciente-titulo">Nuevo paciente</h3>
+            <input type="hidden" id="paciente-id">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="paciente-nombre">Nombre *</label>
+                    <input type="text" id="paciente-nombre" class="input" required maxlength="50">
+                    <span class="form-error" id="error-paciente-nombre"></span>
+                </div>
+                <div class="form-group">
+                    <label for="paciente-apellido">Apellido *</label>
+                    <input type="text" id="paciente-apellido" class="input" required maxlength="50">
+                    <span class="form-error" id="error-paciente-apellido"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="paciente-documento">Documento *</label>
+                <input type="text" id="paciente-documento" class="input" required minlength="7" maxlength="10">
+                <span class="form-error" id="error-paciente-documento"></span>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="paciente-email">Email</label>
+                    <input type="email" id="paciente-email" class="input" maxlength="100">
+                    <span class="form-error" id="error-paciente-email"></span>
+                </div>
+                <div class="form-group">
+                    <label for="paciente-telefono">Teléfono</label>
+                    <input type="tel" id="paciente-telefono" class="input" maxlength="20">
+                    <span class="form-error" id="error-paciente-telefono"></span>
+                </div>
+            </div>
+            <div class="dialog__actions">
+                <button type="button" class="btn btn--ghost" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn--primary">Guardar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Modal Turno -->
+    <dialog id="modal-turno" class="dialog">
+        <form id="form-turno" class="dialog__content dialog__content--form" novalidate>
+            <h3 class="dialog__title" id="modal-turno-titulo">Nuevo turno</h3>
+            <input type="hidden" id="turno-id">
+            <div class="form-group">
+                <label for="turno-paciente">Paciente *</label>
+                <select id="turno-paciente" class="input" required>
+                    <option value="">Seleccionar paciente...</option>
+                </select>
+                <span class="form-error" id="error-turno-paciente"></span>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="turno-fecha">Fecha *</label>
+                    <input type="date" id="turno-fecha" class="input" required>
+                    <span class="form-error" id="error-turno-fecha"></span>
+                </div>
+                <div class="form-group">
+                    <label for="turno-hora">Hora *</label>
+                    <input type="time" id="turno-hora" class="input" required>
+                    <span class="form-error" id="error-turno-hora"></span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Prácticas *</label>
+                <div id="turno-practicas-checkboxes" class="checkbox-group"></div>
+                <span class="form-error" id="error-turno-practicas"></span>
+            </div>
+            <div class="dialog__actions">
+                <button type="button" class="btn btn--ghost" data-close-modal>Cancelar</button>
+                <button type="submit" class="btn btn--primary">Guardar</button>
+            </div>
+        </form>
+    </dialog>
+
     <script src="script.js"></script>
 </body>
 </html>
